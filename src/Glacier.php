@@ -24,7 +24,7 @@
  * @copyright See attached LICENSE for details
  *
  * Created : 18-10-2012
- * Last Modified : Thu Oct 18 16:00:36 2012
+ * Last Modified : Thu Oct 18 16:36:05 2012
  */
 namespace core\connectors\amazon;
 require('AWSUtils.php');

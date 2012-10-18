@@ -20,6 +20,7 @@ The source tree for includes the following files and directories:
 
 * `lib` -- Contains any third-party libraries that the SDK depends on. The licenses for these projects will always be Apache 2.0-compatible.
 * `src` -- Contains the source files needed to talk with AWS Services.
+* `tests` -- Contains tests for the AWS Services (based on the PHPUnit framework) 
 * `README` -- The document you're reading right now.
 
 

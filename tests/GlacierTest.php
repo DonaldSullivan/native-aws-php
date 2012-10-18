@@ -24,7 +24,7 @@
 	* @copyright See attached LICENSE for details
 	*
 	* Created : 18-10-2012
-	* Last Modified : Thu Oct 18 15:56:15 2012
+	* Last Modified : Thu Oct 18 17:04:50 2012
 	*/
 require('src/Glacier.php');
 use core\connectors\amazon\AWSGlacier as AWSGlacier;
@@ -32,7 +32,15 @@ use core\connectors\amazon\AWSGlacier as AWSGlacier;
 class GlacierTest extends PHPUnit_Framework_TestCase {
 	public function testListVaults() {
 		$glacier = new AWSGlacier();
-		$glacier->listVault();
+		$response = $glacier->listVault();
+		$vaultCount = 0;
+		try {
+			$vaults = json_decode($response);
+			$vaultCount = count($vaults->VaultList);
+		} catch(Exception $e) {
+			$vaultCount = 0;
+		}
+		$this->assertTrue($vaultCount>0, 'No Vaults found');
 	}
 
 }
