@@ -53,9 +53,9 @@ class AWSGlacier {
 	
 	public function createVault($vault) {
 		$service = $this->service;
+		$service ['HTTP_METHOD'] = 'PUT';
 		$service['HTTP_HEADERS']['Authorization'] = AWSUtils::getAuthorizationHeader($service, $this->awsConfig); 
 		$service['URL']="https://".$service['NAME'].".".$service['REGION'].".amazonaws.com".$service['ENDPOINT'];
-		$service['HTTP_METHOD']='PUT';
 		$response = AWSUtils::invoke($service);
 		return $response['BODY'];
 	}
