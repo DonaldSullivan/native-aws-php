@@ -48,8 +48,8 @@ class AWSUtils {
 		//echo $canonicalReq."\n";
 		//echo "==========================================="."\n";
 
-		$currTime = strtotime($service_config['HTTP_HEADERS']['Date']);
-		$reqDate = gmdate('Ymd\THis\Z', $currTime);
+		$currTime = time()+(60*60*$awsConfig['TimeOffset']);
+		$reqDate = $service_config['HTTP_HEADERS']['Date'];
 		
 		$credScope = date('Ymd', $currTime)."/".$service_config['REGION']."/".$service_config['NAME']."/aws4_request";
 		$strToSign = $service_config['ALGO']."\n".$reqDate."\n".$credScope."\n".hash('sha256',$canonicalReq);
@@ -57,12 +57,13 @@ class AWSUtils {
 		//echo "==========================================="."\n";
 		//echo $strToSign."\n";
 		//echo "==========================================="."\n";
-		$credKeys = explode('/', $credScope);
-		$derivedKey = "AWS4".$awsConfig['SecretKey'];
-		foreach($credKeys as $key) {
-			$derivedKey = self::hextostr(hash_hmac("sha256", $key, $derivedKey));	
-		}
-		$signature = hash_hmac('sha256', $strToSign, $derivedKey);
+		$kSecret = $awsConfig['SecretKey'];
+		$kDate = hash_hmac("sha256", date('Ymd', $currTime),"AWS4" . $kSecret,true);
+		$kRegion = hash_hmac("sha256", $service_config['REGION'],$kDate,true);
+		$kService = hash_hmac("sha256", $service_config['NAME'],$kRegion,true);
+		$kSigning = hash_hmac("sha256", "aws4_request",$kService,true);
+		
+		$signature = hash_hmac('sha256', $strToSign, $kSigning);
 
     $authHeader = $service_config['ALGO']." Credential=".
 			$awsConfig['AccessKey']."/".date('Ymd', $currTime).
