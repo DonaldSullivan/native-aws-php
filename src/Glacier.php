@@ -37,6 +37,7 @@ class AWSGlacier {
 		$this->awsConfig = array();
 		$this->awsConfig['AccessKey'] = "YOUR_ACCESS_KEY"; 
 		$this->awsConfig['SecretKey'] = "YOUR_SECRET_KEY";
+		$this->awsConfig ['TimeOffset'] = 6;//America/Chicago
 		
 		$this->service['ALGO']="AWS4-HMAC-SHA256";
 		$this->service['NAME']		=	"glacier";
@@ -84,13 +85,14 @@ class AWSGlacier {
 		if(!file_exists($archiveFile)) {
 			return FALSE;
 		}
+		$service ['HTTP_METHOD'] = 'POST';//needs to be above the getAuthorizationHeader call.
 		$service['ENDPOINT'] = "/-/vaults/".$vault."/archives";
 		$service['HTTP_HEADERS']['Authorization'] = AWSUtils::getAuthorizationHeader($service, $this->awsConfig, file_get_contents($archiveFile)); 
 		$service['HTTP_HEADERS']['x-amz-archive-description'] = "Application Backup"; 
 		$service['HTTP_HEADERS']['x-amz-sha256-tree-hash'] = AWSUtils::computeSHA256TreeHash($archiveFile); 
 		$service['HTTP_HEADERS']['x-amz-content-sha256'] = hash('sha256', file_get_contents($archiveFile));
 		$service['URL'] = "https://".$service['NAME'].".".$service['REGION'].".amazonaws.com".$service['ENDPOINT'];
-		$service['HTTP_METHOD']='POST';
+		
 		$service['DATA']= file_get_contents($archiveFile);
 		$response = AWSUtils::invoke($service);
 		$hdrArr = explode("\n",$response['HEADER']);
@@ -106,6 +108,30 @@ class AWSGlacier {
 		$service['URL'] = "https://".$this->service['NAME'].".".$this->service['REGION'].".amazonaws.com".$service['ENDPOINT'];
 		$response = AWSUtils::invoke($service);
 		return $response['BODY'];
+	}
+	
+	//
+	public function getJobOutput($vault, $jobid) {
+		$service = $this->service;
+		$service ['ENDPOINT'] = "/-/vaults" . "/" . $vault . "/jobs/$jobid/output";
+		$service ['HTTP_HEADERS'] ['Authorization'] = AWSUtils::getAuthorizationHeader ( $service, $this->awsConfig );
+		$service ['URL'] = "https://" . $this->service ['NAME'] . "." . $this->service ['REGION'] . ".amazonaws.com" . $service ['ENDPOINT'];
+		$response = AWSUtils::invoke ( $service );
+		return $response ['BODY'];
+	}
+	//
+	public function requestDownload($vault, $archiveid, $description="Download Request") {
+		$data = array ("Type" => "archive-retrieval", "ArchiveId" => $archiveid, "Description" => $description );
+		$service = $this->service;
+		$service ['HTTP_METHOD'] = 'POST';
+		$service ['ENDPOINT'] = "/-/vaults" . "/" . $vault . "/jobs";
+		$service ['HTTP_HEADERS'] ['Authorization'] = AWSUtils::getAuthorizationHeader ( $service, $this->awsConfig, json_encode ( $data ) );
+		$service ['URL'] = "https://" . $this->service ['NAME'] . "." . $this->service ['REGION'] . ".amazonaws.com" . $service ['ENDPOINT'];
+		
+		$service ['DATA'] = json_encode ( $data );
+		
+		$response = AWSUtils::invoke ( $service );
+		return $response ['BODY'];
 	}
 }
 ?>
